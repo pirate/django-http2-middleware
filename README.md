@@ -15,6 +15,8 @@ like `{% static %}`, except it records all the urls on `request.to_preload` auto
 
 Those urls are then transformed into an HTTP preload header which is attached to the response. When `settings.HTTP2_PRESEND_CACHED_HEADERS = True`, the first response's preload headers will be cached and automatically sent in advance during later requests (using [`StreamingHttpResponse`](https://docs.djangoproject.com/en/2.2/ref/request-response/#django.http.StreamingHttpResponse) to send them before the view executes) . Upstream servers like Nginx and CloudFlare will then use these headers to do HTTP2 server push, delivering the resources to clients before they are requested during browser parse & rendering.
 
+<img src="https://i.imgur.com/sow31ar.png">
+
 ## Note about performance
 
 While modern and shiny, this wont necessarily make your site faster. In fact, it can often make sites slower because later requests have the resources cached anyway, so pusing uneeded resources on every request only wastes network bandwidth and hogs IO. Server push is best for sites where first-visit speed is a top priority.  It's up to you to toggle the options and find what the best tradeoffs are for your own needs.
