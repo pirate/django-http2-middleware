@@ -2,12 +2,11 @@
 
 <img src="https://blog.golang.org/h2push/serverpush.svg" height="200px" align="right">
 
-This is middlware for django to assist with generating preload headers for HTTP2-push, with support for using StreamingHttpResponse to send cached preload headers in advance of the actual response being generated. This allows nginx to serve push preload resources before
-django is even finished running the view and returning a response!
+This is a small middlware for Django v2.0+ to assist with generating preload headers for HTTP2-push, with support for using [`StreamingHttpResponse`](https://docs.djangoproject.com/en/2.2/ref/request-response/#django.http.StreamingHttpResponse) to send cached preload headers in advance of the actual response being generated. This allows nginx to serve push preload resources before
+Django is even finished running the view and returning a response!
 
 It's also fully compatible with [`django-csp`](https://django-csp.readthedocs.io/en/latest/configuration.html), it sends `request.csp_nonce` 
-in preload headers correctly so that preloads aren't rejected by your
-csp policy if they require a nonce.
+in preload headers correctly so that preloads aren't rejected by your CSP policy if they require a nonce.
 
 ## How it works
 
