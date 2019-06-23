@@ -1,5 +1,7 @@
 # Django HTTP2 Middleware
 
+<img src="https://blog.golang.org/h2push/serverpush.svg" height="200px" align="right">
+
 This is middlware for django to assist with generating preload headers for HTTP2-push, with support for using StreamingHttpResponse to send cached preload headers in advance of the actual response being generated. This allows nginx to serve push preload resources before
 django is even finished running the view and returning a response!
 
@@ -89,3 +91,7 @@ server {
   ...
 }
 ```
+
+https://www.nginx.com/blog/nginx-1-13-9-http2-server-push/
+
+<img src="https://www.nginx.com/wp-content/uploads/2018/02/http2-server-push-testing-results.png">
