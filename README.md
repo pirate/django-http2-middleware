@@ -34,7 +34,7 @@ While modern and shiny, this wont necessarily make your site faster. In fact, it
 ## Install:
 
 ```bash
-cd /opt/your-project/project-django
+cd /opt/your-project/project-django/
 git clone https://github.com/pirate/django-http2-middleware http2
 ```
 
@@ -72,7 +72,7 @@ HTTP2_PRELOAD_HEADERS = True
 HTTP2_PRESEND_CACHED_HEADERS = True
 
 # allow upstream servers to server-push any files in preload headers
-HTTP2_SERVER_PUSH = False
+HTTP2_SERVER_PUSH = True
 
 # optional recommended django-csp settings if you use CSP with nonce validation
 CSP_DEFAULT_SRC = ("'self'", ...)
@@ -88,19 +88,30 @@ attaches them after the response is generated (`late`).  And the third request
 (and all requests after that) send the cached headers before the response is generated (`early`).
 
 You can see the status by inspecting the `X-HTTP2-PRELOAD` header and the network requests waterfall in the dev tools:  
-<img src="https://i.imgur.com/cHRF8ZF.png" width="200px">
-<img src="https://i.imgur.com/cHRF8ZF.png" width="200px">
+<img src="https://i.imgur.com/cHRF8ZF.png" width="300px">
+<img src="https://i.imgur.com/g0ZU5u9.png" width="300px">
 
-- `x-http2-preload: off`
+### `x-http2-preload: off`
+
 <img src="https://i.imgur.com/sN5Rmjn.png" width="200px">
-- `x-http2-preload: late`
+
+### `x-http2-preload: late`
+
 <img src="https://i.imgur.com/pSOcGQy.png" width="200px">
-- `x-http2-preload: early`
+
+### `x-http2-preload: early`
+
 <img src="https://i.imgur.com/ouRu1rf.png" width="200px">
 
 
 
-## Example Nginx Configuration:
+
+## Example Nginx Configuration
+
+In order to use HTTP2 server push, you need a webserver in front of Django that reads
+the <Link> preload headers and pushes the files.  Luckily, nginx can do this with only
+one extra line of config.
+
 ```nginx
 http2_push_preload                      on;
 ...
