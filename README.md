@@ -89,7 +89,10 @@ after restarting runserver has no preload headers sent in advance (`off`), the s
 attaches them after the response is generated (`late`).  And the third request
 (and all requests after that) send the cached headers before the response is generated (`early`).
 
-You can see the status by inspecting the `X-HTTP2-PRELOAD` header and the network requests waterfall in the dev tools:  
+Start runserver behind nginx and reload your page 3 times while watching the dev console.  If everyting is working correctly,
+the third pageload and all subsequent loads by all users should show up with the `x-http2-preload: early` response header and have all it's `{% http2static url %}` resources served in advance via HTTP2 server push.
+
+You can see the preload status of a given page by inspecting the `X-HTTP2-PRELOAD` response header, and the network requests waterfall in the dev tools:  
 <img src="https://i.imgur.com/cHRF8ZF.png" width="300px">
 <img src="https://i.imgur.com/g0ZU5u9.png" width="300px">
 
