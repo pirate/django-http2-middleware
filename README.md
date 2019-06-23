@@ -80,6 +80,23 @@ CSP_INCLUDE_NONCE_IN = ('default-src',  ...)
 ...
 ```
 
+## Verifying it works
+
+The cache warmup happens in three phases.  The first request to a given URL
+after restarting runserver has no preload headers sent in advance (`off`), the second request has preload headers but only
+attaches them after the response is generated (`late`).  And the third request
+(and all requests after that) send the cached headers before the response is generated (`early`).
+
+You can see the status by inspecting the `X-HTTP2-PRELOAD` header and the network requests waterfall in the dev tools:
+<img src="https://i.imgur.com/cHRF8ZF.png" width="100px">
+<img src="https://i.imgur.com/cHRF8ZF.png" width="100px">
+
+- `x-http2-preload: off` <img src="https://i.imgur.com/sN5Rmjn.png" width="100px">
+- `x-http2-preload: late` <img src="https://i.imgur.com/pSOcGQy.png" width="100px">
+- `x-http2-preload: early` <img src="https://i.imgur.com/ouRu1rf.png" width="100px">
+
+
+
 ## Example Nginx Configuration:
 ```nginx
 http2_push_preload                      on;
