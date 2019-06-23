@@ -32,10 +32,12 @@ While modern and shiny, this wont necessarily make your site faster. In fact, it
 
 ## Install:
 
+```bash
 cd /opt/your-project/project-django
 git clone https://github.com/pirate/django-http2-middleware http2
+```
 
-Then add the following to `settings.py`
+Then add the following to your `settings.py`:
 ```python
 # (adding "http2" to INSTALLED_APPS is not needed)
 
