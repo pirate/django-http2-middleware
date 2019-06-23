@@ -87,13 +87,16 @@ after restarting runserver has no preload headers sent in advance (`off`), the s
 attaches them after the response is generated (`late`).  And the third request
 (and all requests after that) send the cached headers before the response is generated (`early`).
 
-You can see the status by inspecting the `X-HTTP2-PRELOAD` header and the network requests waterfall in the dev tools:
-<img src="https://i.imgur.com/cHRF8ZF.png" width="100px">
-<img src="https://i.imgur.com/cHRF8ZF.png" width="100px">
+You can see the status by inspecting the `X-HTTP2-PRELOAD` header and the network requests waterfall in the dev tools:  
+<img src="https://i.imgur.com/cHRF8ZF.png" width="200px">
+<img src="https://i.imgur.com/cHRF8ZF.png" width="200px">
 
-- `x-http2-preload: off` <img src="https://i.imgur.com/sN5Rmjn.png" width="100px">
-- `x-http2-preload: late` <img src="https://i.imgur.com/pSOcGQy.png" width="100px">
-- `x-http2-preload: early` <img src="https://i.imgur.com/ouRu1rf.png" width="100px">
+- `x-http2-preload: off`
+<img src="https://i.imgur.com/sN5Rmjn.png" width="200px">
+- `x-http2-preload: late`
+<img src="https://i.imgur.com/pSOcGQy.png" width="200px">
+- `x-http2-preload: early`
+<img src="https://i.imgur.com/ouRu1rf.png" width="200px">
 
 
 
