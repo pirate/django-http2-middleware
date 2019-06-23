@@ -19,7 +19,7 @@ Those urls are then transformed into an HTTP preload header which is attached to
 
 ## Note about performance
 
-While modern and shiny, this wont necessarily make your site faster. In fact, it can often make sites slower because later requests have the resources cached anyway, so pusing uneeded resources on every request only wastes network bandwidth and hogs IO. Server push is best for sites where first-visit speed is a top priority.  It's up to you to toggle the options and find what the best tradeoffs are for your own needs.
+While modern and shiny, this wont necessarily make your site faster. In fact, it can often make sites slower because later requests have the resources cached anyway, pushing uneeded resources on every request only wastes network bandwidth and hogs IO in some cases. Server push is best for sites where first-visit speed is a top priority.  It's up to you to toggle the options and find what the best tradeoffs are for your own needs.
 
 ## Usage
 ```html
