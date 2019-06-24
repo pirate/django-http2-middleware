@@ -62,7 +62,7 @@ HTTP2_PRESEND_CACHED_HEADERS = True
 HTTP2_SERVER_PUSH = False
 ```
 
-4. (Optional) Add the templatag as a global template builtin:  
+4. (Optional) Add the templatag as a global template builtin in `settings.py`:  
 This will make `{% http2static %}` availabe in templates without needing `{% load http2 %}` at the top.
 ```python
 TEMPLATES = [
@@ -80,7 +80,7 @@ TEMPLATES = [
 ]
 ```
 
-5. (Optional if using `django-csp`) Include nonce validation on any desired resource types:  
+5. (Optional if using `django-csp`) Include nonces on any desired resource types in `settings.py`:  
 Generated preload headers will automatically include this nonce using `{{request.csp_nonce}}`.
 ```python
 # add any types you want to use with nonce-validation (or just add it to the fallback default-src)
@@ -172,6 +172,8 @@ See more info and nginx http2 options here:
 
 ## Verifying it works
 
+<img src="https://i.imgur.com/cHRF8ZF.png" width="150px" align="right">
+
 Responses can be served in three different ways when using `django-http2-middleware`. You can inspect which way is
 used for a given response by looking at the `x-http2-preload` header attached to the response.
 If all the options are enabled, it takes two initial requests after enabling the middleware and starting Django for the cache to warm up, one to detect the content type, and one to build the list of resource URLs used by the template:
@@ -198,7 +200,7 @@ If you set `HTTP2_PRESEND_CACHED_HEADERS = True` and `HTTP2_SERVER_PUSH = False`
 
 <div align="center">
 
-<img src="https://i.imgur.com/cHRF8ZF.png" width="25%"><img src="https://i.imgur.com/g0ZU5u9.png" width="20%"><img src="https://www.nginx.com/wp-content/uploads/2018/02/http2-server-push-testing-results.png" width="40%">
+<img src="https://i.imgur.com/g0ZU5u9.png" width="25%"><img src="https://www.nginx.com/wp-content/uploads/2018/02/http2-server-push-testing-results.png" width="40%">
 
 </div>
 
