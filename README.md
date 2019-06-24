@@ -88,6 +88,23 @@ CSP_DEFAULT_SRC = ("'self'", ...)
 CSP_INCLUDE_NONCE_IN = ('default-src',  ...)
 ```
 
+## Usage
+
+Just use the `{% http2static '...' %}` tag instead of `{% static '...' %}` anytime you want to have a resource preloaded.
+
+```html
+<!-- It's still a good idea to put normal html preload link tags at the top of your templates in addition to using the auto-generated HTTP headers, though it's not strictly necessary -->
+<link rel="preload" as="style" href="{% http2static 'css/base.css' %}" crossorigin nonce="{{request.csp_nonce}}">
+<link rel="preload" as="script" href="{% http2static 'vendor/jquery-3.4.1/jquery.min.js' %}" crossorigin nonce="{{request.csp_nonce}}">
+
+...
+<!-- Place the actual tags anywhere on the page, they will likely already be pushed and downloaded by time the browser parses them. -->
+<link rel="stylesheet" href="{% http2static 'css/base.css' %}" type="text/css" crossorigin nonce="{{request.csp_nonce}}">
+<script src="{% http2static 'vendor/jquery-3.4.1/jquery.min.js' %}" type="text/javascript" crossorigin nonce="{{request.cscp_nonce}}"></script>
+```
+
+Don't use `{% http2static %}` for everything, just use it for things in the critical render path that are needed for the initial pageload.  It's best used for CSS, JS, fonts, and icons required to render the page nicely, but usually shouldn't be used for  non-critical footer scripts and styles, async page content, images, video, audio, or other media.
+
 
 ## Configuration
 
@@ -153,35 +170,20 @@ See more info and nginx http2 options here:
  - http://nginx.org/en/docs/http/ngx_http_v2_module.html
 
 
-## Usage
-
-Just use the `{% http2static '...' %}` tag instead of `{% static '...' %}` anytime you want to have a resource preloaded.
-
-```html
-<!-- It's still a good idea to put normal html preload link tags at the top of your templates in addition to using the auto-generated HTTP headers, though it's not strictly necessary -->
-<link rel="preload" as="style" href="{% http2static 'css/base.css' %}" crossorigin nonce="{{request.csp_nonce}}">
-<link rel="preload" as="script" href="{% http2static 'vendor/jquery-3.4.1/jquery.min.js' %}" crossorigin nonce="{{request.csp_nonce}}">
-
-...
-<!-- Place the actual tags anywhere on the page, they will likely already be pushed and downloaded by time the browser parses them. -->
-<link rel="stylesheet" href="{% http2static 'css/base.css' %}" type="text/css" crossorigin nonce="{{request.csp_nonce}}">
-<script src="{% http2static 'vendor/jquery-3.4.1/jquery.min.js' %}" type="text/javascript" crossorigin nonce="{{request.cscp_nonce}}"></script>
-```
-
-Don't use `{% http2static %}` for everything, just use it for things in the critical render path that are needed for the initial pageload.  It's best used for CSS, JS, fonts, and icons required to render the page nicely, but usually shouldn't be used for  non-critical footer scripts and styles, async page content, images, video, audio, or other media.
-
-
 ## Verifying it works
 
-The cache warmup happens in three phases.  The first request to a given URL
-after restarting runserver has no preload headers sent in advance (`off`), the second request has preload headers but only
-attaches them after the response is generated (`late`).  And the third request
-(and all requests after that) send the cached headers before the response is generated (`early`).
+Responses can be served in three different ways when using `django-http2-middleware`. You can inspect which way is
+used for a given response by looking at the `x-http2-preload` header attached to the response.
+If all the options are enabled, it takes two initial requests after enabling the middleware and starting Django for the cache to warm up, one to detect the content type, and one to build the list of resource URLs used by the template:
 
-Start runserver behind nginx and reload your page 3 times while watching the dev console.  If everyting is working correctly,
-the third pageload and all subsequent loads by all users should show up with the `x-http2-preload: early` response header and have all it's `{% http2static url %}` resources served in advance via HTTP2 server push.
+1. The first request to a given URL has no preload headers sent in advance (`x-http2-preload: off`). It's used to confirm that the request and response are `Content-Type: text/html` and not a JSON API request, file download, or other non-html type that shouldn't have preload headers attached.
+2. The second request has preload headers but only attaches them after the response is generated (`x-http2-preload: late`). It's used build the initial cache of preload urls for the given `request.path` by collecting urls used by `{% http2static %}` tags during template rendering. 
+3. If `HTTP2_PRESEND_CACHED_HEADERS = True`, the third request (and all requests after that) send the cached headers immediately before the response is generated (`x-http2-preload: early`). If presending cached headers is disabled, then `StreamingHttpResponse` wont be used to pre-send headers before the view, and preload headers will be attached after the response as usual in `x-http2-preload: late` mode.
 
-You can see the preload status of a given page by inspecting the `X-HTTP2-PRELOAD` response header, and the network requests waterfall in the dev tools:  
+Start runserver behind nginx and reload your page 4 times while watching the dev console to confirm the cache warms up properly and later requests receive server-pushed resources.  If everyting is working correctly,
+the third pageload and all subsequent loads by all users should show up with the `x-http2-preload: early` response header, and pushed resources should appear significantly earlier in the network timing watefall view.
+
+You can inspect the preload performance of a given page and confirm it matches what you expect for its `x-http2-preload` mode using the network requests waterfall graph in the Chrome/Firefox/Safari dev tools:  
 <img src="https://i.imgur.com/cHRF8ZF.png" width="300px">
 <img src="https://i.imgur.com/g0ZU5u9.png" width="300px">
 
