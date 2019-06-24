@@ -8,7 +8,7 @@ Django is even finished running the view and returning a response!
 It's also fully compatible with [`django-csp`](https://django-csp.readthedocs.io/en/latest/configuration.html), it sends `request.csp_nonce` 
 in preload headers correctly so that preloads aren't rejected by your CSP policy if they require a nonce.  Support for CSP hashes as well as nonces is also planned in the near future.
 
-**A note about HTTP2 server-push:**
+**A note about HTTP2 server-push:**  
 HTTP2 server-push will become the optimal method of page delivery for both latency and bandwidth once cache-digests are released.  Until then, it remains a novel toy that isn't recommended in most cases, but is fun to play with if you like deploying the most cutting edge tech you can. Read more about HTTP2 and server push here:
 
  - https://http2.github.io/faq/#whats-the-benefit-of-server-push
@@ -89,7 +89,7 @@ HTTP2_PRELOAD_HEADERS = True
 HTTP2_PRESEND_CACHED_HEADERS = True
 
 # allow upstream servers to server-push any files in preload headers
-HTTP2_SERVER_PUSH = True
+HTTP2_SERVER_PUSH = False   # False is recommended until cache-digests are sent by most browsers
 
 # optional recommended django-csp settings if you use CSP with nonce validation
 CSP_DEFAULT_SRC = ("'self'", ...)
@@ -114,6 +114,7 @@ You can see the preload status of a given page by inspecting the `X-HTTP2-PRELOA
 | `x-http2-preload: off`  | `x-http2-preload: late` | `x-http2-preload: early` |
 | ------------- | ------------- | ------------- |
 | ![](https://i.imgur.com/sN5Rmjn.png)  | ![](https://i.imgur.com/pSOcGQy.png)  | ![](https://i.imgur.com/ouRu1rf.png)  |
+| Requires `HTTP2_PRELOAD_HEADERS = True`  | Requires `HTTP2_PRESEND_CACHED_HEADERS = True`  | Requires `HTTP2_SERVER_PUSH = True`  |
 
 
 
