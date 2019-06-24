@@ -2,13 +2,14 @@
 
 <img src="https://blog.golang.org/h2push/serverpush.svg" height="200px" align="right">
 
-This is a small middlware for Django v2.0+ to assist with generating preload headers for HTTP2-push, with support for using [`StreamingHttpResponse`](https://docs.djangoproject.com/en/2.2/ref/request-response/#django.http.StreamingHttpResponse) to send cached preload headers in advance of the actual response being generated. This allows nginx to serve push preload resources before
-Django is even finished running the view and returning a response!
+This is a small middlware for Django v2.0+ to automatically generate preload headers from staticfiles used in template rendering, with support for using [`StreamingHttpResponse`](https://docs.djangoproject.com/en/2.2/ref/request-response/#django.http.StreamingHttpResponse) to send cached preload headers in advance of the actual response being generated. The preload headers alone provide large speed boost, but pre-sending the cached headers in advance of view execution is the real advantage that this library provides compared to other staticfile preload header libraries. 
 
 It's also fully compatible with [`django-csp`](https://django-csp.readthedocs.io/en/latest/configuration.html), it sends `request.csp_nonce` 
 in preload headers correctly so that preloads aren't rejected by your CSP policy if they require a nonce.  Support for CSP hashes as well as nonces is also planned in the near future.
 
 **A note about HTTP2 server-push:**  
+As an optional bonus, when preload headers are sent early and `HTTP2_SERVER_PUSH = True` in settings.py, upstream servers like Nginx or Cloudflare HTTP2 will usually finish server pushing all the page resources not only before the browser requests them, but even before the view is finished executing, providing a 100ms+ headstart to static file loading in some cases. When enabled it's very cool to look at the network waterfall visualization and see your page's statcifiles finish loading together, a full 50ms before the HTML is even returned from Django!
+
 HTTP2 server-push will become the optimal method of page delivery for both latency and bandwidth once cache-digests are released.  Until then, it remains a novel toy that isn't recommended in most cases, but is fun to play with if you like deploying the most cutting edge tech you can. Read more about HTTP2 and server push here:
 
  - https://http2.github.io/faq/#whats-the-benefit-of-server-push
