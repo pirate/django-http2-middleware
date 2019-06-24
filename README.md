@@ -55,7 +55,7 @@ MIDDLEWARE = [
 # (adding "http2" to INSTALLED_APPS is not needed)
 ```
 
-3. Add the django-http2-middleware configuration options to your `settings.py`:
+3. Add the required configuration options to your `settings.py`:
 ```python
 HTTP2_PRELOAD_HEADERS = True
 HTTP2_PRESEND_CACHED_HEADERS = True
