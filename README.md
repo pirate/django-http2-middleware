@@ -1,7 +1,8 @@
 # Django HTTP2 Middleware
 
 ```html
-<script src="{% http2static 'js/jquery.min.js' %}" type="text/javascript" crossorigin nonce="{{request.cscp_nonce}}"></script>
+<script src="{% http2static 'js/jquery.min.js' %}"></script>
+<!-- HTTP response will now have an auto-generated preload header for js/jquery.min.js --> 
 ```
 
 <img src="https://i.imgur.com/ouRu1rf.png" height="250px" align="right">
