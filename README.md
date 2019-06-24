@@ -45,23 +45,25 @@ cd /opt/your-project/project-django/
 git clone https://github.com/pirate/django-http2-middleware http2
 ```
 
-2. Add 'http2.middleware.HTTP2Middleware' to your `MIDDLEWARE` list (at the end, but before Gzip) in your project's `settings.py`:
+2. Add `http2.middleware.HTTP2Middleware` to your `MIDDLEWARE` list in `settings.py`:
 ```python
 MIDDLEWARE = [
     ...
     'csp.middleware.CSPMiddleware',       # (optional if you use django-csp, it must be above the http2 middleware)
-    'http2.middleware.HTTP2Middleware',   # (just add the middleware here, adding "http2" to INSTALLED_APPS is not needed)
+    'http2.middleware.HTTP2Middleware',   # (add the middleware at the end, but before gzip)
 ]
+# (adding "http2" to INSTALLED_APPS is not needed)
 ```
 
-3. Add the django-http2-middleware configuration options anywhere in `settings.py` (all 3 must be added):
+3. Add the django-http2-middleware configuration options to your `settings.py`:
 ```python
 HTTP2_PRELOAD_HEADERS = True
 HTTP2_PRESEND_CACHED_HEADERS = True
 HTTP2_SERVER_PUSH = False
 ```
 
-4. (Optional) Add the templatag as a global builtin to make `{% http2static %}` availabe in templates without needing `{% load http2 %}` at the top:
+4. (Optional) Add the templatag as a global template builtin:
+This will make `{% http2static %}` availabe in templates without needing `{% load http2 %}` at the top.
 ```python
 # 
 # 
@@ -80,7 +82,8 @@ TEMPLATES = [
 ]
 ```
 
-5. (Optional if using `django-csp`) Include nonce validation on any desired resource types, preload headers will automatically include the same nonce taken from `{{request.csp_nonce}}`:
+5. (Optional if using `django-csp`) Include nonce validation on any desired resource types:
+Generated preload headers will automatically include this nonce using `{{request.csp_nonce}}`.
 ```python
 # add any types you want to use with nonce-validation (or just add it to the fallback default-src)
 CSP_DEFAULT_SRC = ("'self'", ...)
