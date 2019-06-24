@@ -196,7 +196,11 @@ You can inspect the preload performance of a given page and confirm it matches w
 
 If you set `HTTP2_PRESEND_CACHED_HEADERS = True` and `HTTP2_SERVER_PUSH = False`, responses will all be sent in `x-http2-preload: late` mode, which is the recommended mode until cache digests become available in most browsers.
 
-<img src="https://i.imgur.com/cHRF8ZF.png" width="22%"><img src="https://i.imgur.com/g0ZU5u9.png" width="30%"><img src="https://www.nginx.com/wp-content/uploads/2018/02/http2-server-push-testing-results.png" width="55%">
+<div align="center">
+
+<img src="https://i.imgur.com/cHRF8ZF.png" width="25%"><img src="https://i.imgur.com/g0ZU5u9.png" width="20%"><img src="https://www.nginx.com/wp-content/uploads/2018/02/http2-server-push-testing-results.png" width="40%">
+
+</div>
 
 ## Further Reading
 
