@@ -196,9 +196,7 @@ You can inspect the preload performance of a given page and confirm it matches w
 
 If you set `HTTP2_PRESEND_CACHED_HEADERS = True` and `HTTP2_SERVER_PUSH = False`, responses will all be sent in `x-http2-preload: late` mode, which is the recommended mode until cache digests become available in most browsers.
 
-<img src="https://i.imgur.com/cHRF8ZF.png" width="26%">
-<img src="https://i.imgur.com/g0ZU5u9.png" width="33%">
-<img src="https://www.nginx.com/wp-content/uploads/2018/02/http2-server-push-testing-results.png" width="50%">
+<img src="https://i.imgur.com/cHRF8ZF.png" width="22%"><img src="https://i.imgur.com/g0ZU5u9.png" width="30%"><img src="https://www.nginx.com/wp-content/uploads/2018/02/http2-server-push-testing-results.png" width="55%">
 
 ## Further Reading
 
@@ -217,7 +215,7 @@ Once HTTP2 [cache digests](https://httpwg.org/http-extensions/cache-digest.html)
 
 <div align="center">
     
-<img src="https://i.imgur.com/fyFvPak.png" width="500px"><br/>
+<img src="https://i.imgur.com/fyFvPak.png" width="400px"><br/>
 
 ["Cache Digests: Solving the Cache Invalidation Problem of HTTP/2 Server Push to Reduce Latency and Bandwidth"](https://calendar.perfplanet.com/2016/cache-digests-http2-server-push/) by Sebastiaan Deckers
 
@@ -226,6 +224,23 @@ Once HTTP2 [cache digests](https://httpwg.org/http-extensions/cache-digest.html)
 ## Bonus Material
 
 Did you know you can run code *after a Django view returns a response* without using Celery, Dramatiq, or another background worker system?
-Turns out it's trivially easy, but very few people know about it: https://gist.github.com/pirate/c4deb41c16793c05950a6721a820cde9
+Turns out it's trivially easy, but very few people know about it.
+
+```python
+class HttpResponseWithCallback(HttpResponse):
+    def __init__(self, *args, **kwargs):
+        self.callback = kwargs.pop('callback', None)
+        super().__init__(*args, **kwargs)
+
+    def close(self):
+        super().close()
+        self.callback and self.callback(response=self)
+
+
+def my_view(request):
+    ...
+    return HttpResponseWithCallback(..., callback=some_expensive_function)
+```
+
 
 It's perfect for sending signup emails, tracking analytics events, writing to files, or any other CPU/IO intensive task that you don't want to block the user on.
