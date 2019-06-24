@@ -2,7 +2,7 @@
 
 ```html
 <script src="{% http2static 'js/jquery.min.js' %}"></script>
-<!-- HTTP response will now have an auto-generated preload header for js/jquery.min.js --> 
+<!-- Preload header for js/jquery.min.js will be automatically attached to response --> 
 ```
 
 <img src="https://i.imgur.com/ouRu1rf.png" height="250px" align="right">
