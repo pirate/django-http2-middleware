@@ -187,10 +187,13 @@ You can inspect the preload performance of a given page and confirm it matches w
 <img src="https://i.imgur.com/cHRF8ZF.png" width="300px">
 <img src="https://i.imgur.com/g0ZU5u9.png" width="300px">
 
-| `x-http2-preload: off`  | `x-http2-preload: late` | `x-http2-preload: early` |
-| ------------- | ------------- | ------------- |
-| ![](https://i.imgur.com/sN5Rmjn.png)  | ![](https://i.imgur.com/pSOcGQy.png)  | ![](https://i.imgur.com/ouRu1rf.png)  |
-| Requires `HTTP2_PRELOAD_HEADERS = True`  | Requires `HTTP2_PRESEND_CACHED_HEADERS = True`  | Requires `HTTP2_SERVER_PUSH = True`  |
+|     `x-http2-preload: off`     |         `x-http2-preload: late`        |       `x-http2-preload: early`        |
+| ------------------------------ | -------------------------------------- | ------------------------------------- |
+| ![](https://i.imgur.com/sN5Rmjn.png) | ![](https://i.imgur.com/pSOcGQy.png) | ![](https://i.imgur.com/ouRu1rf.png) |
+|         Requires:              |             Requires:                  |             Requires:                 |
+| `HTTP2_PRELOAD_HEADERS = True` |  `HTTP2_PRELOAD_HEADERS = True`        | `HTTP2_PRELOAD_HEADERS = True`        |
+|                                |  `HTTP2_PRESEND_CACHED_HEADERS = True` | `HTTP2_PRESEND_CACHED_HEADERS = True` |
+|                                |                                        | `HTTP2_SERVER_PUSH = True`            |
 
 If you set `HTTP2_PRESEND_CACHED_HEADERS = True` and `HTTP2_SERVER_PUSH = False`, responses will all be sent in `x-http2-preload: late` mode, which is the recommended mode until cache digests become available in most browsers.
 
