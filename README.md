@@ -249,6 +249,7 @@ def my_view(request):
 ```
 
 
-It's perfect for sending signup emails, tracking analytics events, writing to files, or any other CPU/IO intensive task that you don't want to block the user on.
+In small projects it's perfect for sending signup emails, tracking analytics events, writing to files, or any other CPU/IO intensive task that you don't want to block the user on.
+In large projects you probably don't want to block main Django worker threads with things that would be better handled in the background, as it'll greatly reduce the number of simultaneous users your servers can handle.
 
 For a full example demonstrating this library and more, check out this gist: [django_turbo_response.py](https://gist.github.com/pirate/79f84dfee81ba0a38b6113541e827fd5).
