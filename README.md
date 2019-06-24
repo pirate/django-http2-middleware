@@ -1,5 +1,9 @@
 # Django HTTP2 Middleware
 
+```html
+<script src="{% http2static 'js/jquery.min.js' %}" type="text/javascript" crossorigin nonce="{{request.cscp_nonce}}"></script>
+```
+
 <img src="https://i.imgur.com/ouRu1rf.png" height="250px" align="right">
 
 This is a small middlware for Django v2.0+ to automatically generate preload headers from staticfiles used in template rendering, with support for using [`StreamingHttpResponse`](https://docs.djangoproject.com/en/2.2/ref/request-response/#django.http.StreamingHttpResponse) to send cached preload headers in advance of the actual response being generated. The preload headers alone provide large speed boost, but pre-sending the cached headers in advance of view execution is the real advantage that this library provides compared to other libraries. 
@@ -48,7 +52,7 @@ Just use the `{% http2static '...' %}` tag instead of `{% static '...' %}` anyti
 ...
 <!-- Place the actual tags anywhere on the page, they will likely already be pushed and downloaded by time the browser parses them. -->
 <link rel="stylesheet" href="{% http2static 'css/base.css' %}" type="text/css" crossorigin nonce="{{request.csp_nonce}}">
-<script src="{% http2static 'vendor/jquery-3.4.1/jquery.min.js' %}" type="text/javascript" crossorigin nonce="{{nonce}}"></script>
+<script src="{% http2static 'vendor/jquery-3.4.1/jquery.min.js' %}" type="text/javascript" crossorigin nonce="{{request.cscp_nonce}}"></script>
 ```
 
 Don't use `{% http2static %}` for everything, just use it for things in the critical render path that are needed for the initial pageload.  It's best used for CSS, JS, fonts, and icons required to render the page nicely, but usually shouldn't be used for  non-critical footer scripts and styles, async page content, images, video, audio, or other media.
