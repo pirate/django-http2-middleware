@@ -6,7 +6,22 @@ This is a small middlware for Django v2.0+ to assist with generating preload hea
 Django is even finished running the view and returning a response!
 
 It's also fully compatible with [`django-csp`](https://django-csp.readthedocs.io/en/latest/configuration.html), it sends `request.csp_nonce` 
-in preload headers correctly so that preloads aren't rejected by your CSP policy if they require a nonce.
+in preload headers correctly so that preloads aren't rejected by your CSP policy if they require a nonce.  Support for CSP hashes as well as nonces is also planned in the near future.
+
+**A note about HTTP2 server-push:**
+HTTP2 server-push will become the optimal method of page delivery for both latency and bandwidth once cache-digests are released.  Until then, it remains a novel toy that isn't recommended in most cases, but is fun to play with if you like deploying the most cutting edge tech you can. Read more about HTTP2 and server push here:
+
+ - https://http2.github.io/faq/#whats-the-benefit-of-server-push
+ - https://calendar.perfplanet.com/2016/cache-digests-http2-server-push/
+ - https://httpwg.org/http-extensions/cache-digest.html#introduction
+
+This library is still useful without server push enabled though, as it's primary function is to collect statifiles and send them as `<Link>` preload headers in parallel *before the Django views finish executing*, which can provide a 100ms+ headstart for the browser to start loading page content in many cases. The optimal recommended settings for maximum speed gain (as of 2019/07) are to send preload headers, cache them and send them in advance, but don't enable `HTTP2_SERVER_PUSH` until cache-digest functionality is released in most browsers:
+
+```python
+HTTP2_PRELOAD_HEADERS = True
+HTTP2_PRESEND_CACHED_HEADERS = True
+HTTP2_SERVER_PUSH = False
+```
 
 ## How it works
 
@@ -96,17 +111,9 @@ You can see the preload status of a given page by inspecting the `X-HTTP2-PRELOA
 <img src="https://i.imgur.com/cHRF8ZF.png" width="300px">
 <img src="https://i.imgur.com/g0ZU5u9.png" width="300px">
 
-### `x-http2-preload: off`
-
-<img src="https://i.imgur.com/sN5Rmjn.png" width="200px">
-
-### `x-http2-preload: late`
-
-<img src="https://i.imgur.com/pSOcGQy.png" width="200px">
-
-### `x-http2-preload: early`
-
-<img src="https://i.imgur.com/ouRu1rf.png" width="200px">
+| `x-http2-preload: off`  | `x-http2-preload: late` | `x-http2-preload: early` |
+| ------------- | ------------- | ------------- |
+| ![](https://i.imgur.com/sN5Rmjn.png)  | ![](https://i.imgur.com/pSOcGQy.png)  | ![](https://i.imgur.com/ouRu1rf.png)  |
 
 
 
@@ -118,12 +125,16 @@ the <Link> preload headers and pushes the files.  Luckily, nginx can do this wit
 one extra line of config.
 
 ```nginx
-http2_push_preload                      on;
+http2_push_preload on;  # nginx will automatically server-push anything specified in the preload header
 ...
 
 server {
-  listen 443 ssl http2;
-  ...
+    listen 443 ssl http2;
+    ...
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        ...
+    }
 }
 ```
 
@@ -146,7 +157,17 @@ to send push headers before the view executes, so I think while not complete or 
 
 Once HTTP2 [cache digests](https://httpwg.org/http-extensions/cache-digest.html) are finalized, server push will invariably become the fastest way to deliver assets, and this project will get more of my time as we integrate it into all our production projects at @Monadical-SAS.  To read more about why cache digests are critical to HTTP2 server push actually being useful, this article is a great resource:  
 
+<div align="center">
+    
 <img src="https://i.imgur.com/fyFvPak.png" width="500px"><br/>
 
 ["Cache Digests: Solving the Cache Invalidation Problem of HTTP/2 Server Push to Reduce Latency and Bandwidth"](https://calendar.perfplanet.com/2016/cache-digests-http2-server-push/) by Sebastiaan Deckers
 
+</div>
+
+## Bonus Material
+
+Did you know you can run code *after a Django view returns a response* without using Celery, Dramatiq, or another background worker system?
+Turns out it's trivially easy, but very few people know about it: https://gist.github.com/pirate/c4deb41c16793c05950a6721a820cde9
+
+It's perfect for sending signup emails, tracking analytics events, writing to files, or any other CPU/IO intensive task that you don't want to block the user on.
