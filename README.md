@@ -1,6 +1,6 @@
 # Django HTTP2 Middleware
 
-<img src="https://blog.golang.org/h2push/serverpush.svg" height="200px" align="right">
+<img src="https://i.imgur.com/ouRu1rf.png" height="250px" align="right">
 
 This is a small middlware for Django v2.0+ to automatically generate preload headers from staticfiles used in template rendering, with support for using [`StreamingHttpResponse`](https://docs.djangoproject.com/en/2.2/ref/request-response/#django.http.StreamingHttpResponse) to send cached preload headers in advance of the actual response being generated. The preload headers alone provide large speed boost, but pre-sending the cached headers in advance of view execution is the real advantage that this library provides compared to other libraries. 
 
@@ -34,7 +34,7 @@ It works by providing a templatetag `{% http2static %}` that serves as a drop-in
 
 The http2 middleware then transforms the list of `to_preload` urls into a full HTTP preload header, which is then attached to the response. When `settings.HTTP2_PRESEND_CACHED_HEADERS = True`, the first response's preload headers will be cached and automatically sent in advance during later requests (using [`StreamingHttpResponse`](https://docs.djangoproject.com/en/2.2/ref/request-response/#django.http.StreamingHttpResponse) to send them before the view executes). Upstream servers like Nginx and CloudFlare can then use these headers to do HTTP2 server push, delivering the resources to clients before they are requested during browser parse & rendering.
 
-<img src="https://i.imgur.com/sow31ar.png">
+<img src="https://i.imgur.com/sow31ar.png" width="70%"><img src="https://blog.golang.org/h2push/serverpush.svg" height="30%">
 
 ## Usage
 
