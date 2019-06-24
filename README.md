@@ -62,11 +62,9 @@ HTTP2_PRESEND_CACHED_HEADERS = True
 HTTP2_SERVER_PUSH = False
 ```
 
-4. (Optional) Add the templatag as a global template builtin:
+4. (Optional) Add the templatag as a global template builtin:  
 This will make `{% http2static %}` availabe in templates without needing `{% load http2 %}` at the top.
 ```python
-# 
-# 
 TEMPLATES = [
     {
         ...
@@ -82,7 +80,7 @@ TEMPLATES = [
 ]
 ```
 
-5. (Optional if using `django-csp`) Include nonce validation on any desired resource types:
+5. (Optional if using `django-csp`) Include nonce validation on any desired resource types:  
 Generated preload headers will automatically include this nonce using `{{request.csp_nonce}}`.
 ```python
 # add any types you want to use with nonce-validation (or just add it to the fallback default-src)
@@ -102,41 +100,57 @@ HTTP2_PRELOAD_HEADERS = True
 HTTP2_PRESEND_CACHED_HEADERS = True
 HTTP2_SERVER_PUSH = False
 ```
+### `django-http2-middleware` Configuration
 
-### `HTTP2_PRELOAD_HEADERS`
+#### `HTTP2_PRELOAD_HEADERS`
+*Values:* [`True`]/`False`  
+
 Attach any `{% http2static %}` urls used templates in an auto-generated HTTP preload header on the response.
 Disable this to turn off preload headers and disable the middleware entirely, this also prevents both header caching and http2 server push.
 
-### `HTTP2_PRESEND_CACHED_HEADERS`
+#### `HTTP2_PRESEND_CACHED_HEADERS`
+*Values:* [`True`]/`False`  
+
 Cache first request's preload urls and send in advance on subsequent requests.
 Eanble this to cache the first request's generated preload headers and use [`StreamingHttpResponse`](https://docs.djangoproject.com/en/2.2/ref/request-response/#django.http.StreamingHttpResponse) on subsequent requests to send the headers early before the view starts executing.  Disable this to use normal HTTPResponses with the preload headers attached at the end of view execution.
 
-### `HTTP2_SERVER_PUSH`
+#### `HTTP2_SERVER_PUSH`
+*Values:* `True`/[`False`]  
+
 Allow upstream servers to server-push any files in preload headers.
-Disable this to add `; nopush` to all the preload headers to prevent upstream servers from pushing resources in advance.
+Disable this to add `; nopush` to all the preload headers to prevent upstream servers from pushing resources in advance.  
 Keeping this set to `False` is recommended until cache-digests are sent by most browsers.
 
-### Example Webserver Configuration
+### `django-csp` Configuration
+
+There are many ways to implement Content Security Policy headers and nonces with Django, 
+the most popular for django is [`django-csp`](https://github.com/mozilla/django-csp), 
+which is library maintained by Mozilla. This library is built to be compatible
+with Mozilla's `django-csp`, but it's not required to use both together.  You can find more info about
+configuring Django to do CSP verification here:
+
+- https://django-csp.readthedocs.io/en/latest/configuration.html#policy-settings
+- https://content-security-policy.com/
+- https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
+
+### Webserver Configuration
 
 In order to use HTTP2 server push, you need a webserver in front of Django that reads
-the <Link> preload headers and pushes the files.  Cloudflare has an option to enable server push,
- and nginx can do this with only one extra line of config.
+the <Link> preload headers and pushes the files.  Cloudflare has a GUI control panel option to enable server push,
+ and nginx can do it with only one extra line of config:
 
 ```nginx
-http2_push_preload on;  # now nginx will automatically server-push anything specified in preload headers
-...
-
 server {
     listen 443 ssl http2;
+    http2_push_preload on;  # nginx will automatically server-push anything specified in preload headers
     ...
-    location / {
-        proxy_pass http://127.0.0.1:8000;
-        ...
-    }
 }
 ```
 
-https://www.nginx.com/blog/nginx-1-13-9-http2-server-push/
+See more info and nginx http2 options here:  
+
+ - https://www.nginx.com/blog/nginx-1-13-9-http2-server-push/
+ - http://nginx.org/en/docs/http/ngx_http_v2_module.html
 
 
 ## Usage
