@@ -130,3 +130,23 @@ server {
 https://www.nginx.com/blog/nginx-1-13-9-http2-server-push/
 
 <img src="https://www.nginx.com/wp-content/uploads/2018/02/http2-server-push-testing-results.png">
+
+## Further Reading
+
+After making my own solution I discovered great minds think alike, and a few people have done exactly the same thing before me already!
+It's crazy how similarly we all chose to implement this, everyone used a drop-in replacement for `{% static %}`, I guess it goes to show
+that Django is particularly designed well in this area, because there's one obvious way to do things and everyone independently figured it out and implemented robust solutions in <200LOC.
+
+- https://github.com/ricardochaves/django_http2_push
+- https://github.com/fladi/django-static-push
+- https://github.com/DistPub/nginx-http2-django-server-push
+
+However, none of these support CSP policies (which require adding nonces to the preload headers), or use [`StreamingHttpResponse`](https://docs.djangoproject.com/en/2.2/ref/request-response/#django.http.StreamingHttpResponse)
+to send push headers before the view executes, so I think while not complete or "production-ready", this project takes adventage of the available speed-up methods to the fullest degree out of the 4.
+
+Once HTTP2 [cache digests](https://httpwg.org/http-extensions/cache-digest.html) are finalized, server push will invariably become the fastest way to deliver assets, and this project will get more of my time as we integrate it into all our production projects at @Monadical-SAS.  To read more about why cache digests are critical to HTTP2 server push actually being useful, this article is a great resource:  
+
+<img src="https://i.imgur.com/fyFvPak.png" width="500px"><br/>
+
+["Cache Digests: Solving the Cache Invalidation Problem of HTTP/2 Server Push to Reduce Latency and Bandwidth"](https://calendar.perfplanet.com/2016/cache-digests-http2-server-push/) by Sebastiaan Deckers
+
