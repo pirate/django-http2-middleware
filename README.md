@@ -12,6 +12,17 @@ This is a small middlware for Django v2.0+ to automatically generate preload hea
 It's also fully compatible with [`django-csp`](https://django-csp.readthedocs.io/en/latest/configuration.html), it sends `request.csp_nonce` 
 in preload headers correctly so that preloads aren't rejected by your CSP policy if they require a nonce. Support for automatically generating and attaching CSP hashes for staticfiles and inline blocks is also planned in the near future.
 
+---
+
+
+## How it works
+
+It works by providing a templatetag `{% http2static %}` that serves as a drop-in replacement for `{% static %}`, except it records all the urls used while rendering the template in `request.to_preload`.
+
+The http2 middleware then transforms the list of `to_preload` urls into a full HTTP preload header, which is then attached to the response. When `settings.HTTP2_PRESEND_CACHED_HEADERS = True`, the first response's preload headers will be cached and automatically sent in advance during later requests (using [`StreamingHttpResponse`](https://docs.djangoproject.com/en/2.2/ref/request-response/#django.http.StreamingHttpResponse) to send them before the view executes). Upstream servers like Nginx and CloudFlare can then use these headers to do HTTP2 server push, delivering the resources to clients before they are requested during browser parse & rendering.
+
+<img src="https://i.imgur.com/sow31ar.png" width="70%"><img src="https://blog.golang.org/h2push/serverpush.svg" width="29%">
+
 **A note about HTTP2 server-push:**  
 As an optional bonus, when preload headers are sent early and `HTTP2_SERVER_PUSH = True` in settings.py, upstream servers like Nginx or Cloudflare HTTP2 will usually finish server pushing all the page resources not only before the browser requests them, but even before the view is finished executing, providing a 100ms+ headstart to static file loading in some cases. When enabled it's very cool to look at the network waterfall visualization and see your page's statcifiles finish loading together, a full 50ms before the HTML is even returned from Django!
 
@@ -24,39 +35,6 @@ HTTP2 server-push will become the optimal method of page delivery for both laten
  - https://httpwg.org/http-extensions/cache-digest.html#introduction
 
 This library is still useful without server push enabled though, as it's primary function is to collect statifiles and send them as `<Link>` preload headers in parallel *before the Django views finish executing*, which can provide a 100ms+ headstart for the browser to start loading page content in many cases. The optimal recommended settings for maximum speed gain (as of 2019/07) are to send preload headers, cache them and send them in advance, but don't enable `HTTP2_SERVER_PUSH` until cache-digest functionality is released in most browsers:
-
-**Recommended settings:**
-
-```python
-HTTP2_PRELOAD_HEADERS = True
-HTTP2_PRESEND_CACHED_HEADERS = True
-HTTP2_SERVER_PUSH = False
-```
-
-## How it works
-
-It works by providing a templatetag `{% http2static %}` that serves as a drop-in replacement for `{% static %}`, except it records all the urls used while rendering the template in `request.to_preload`.
-
-The http2 middleware then transforms the list of `to_preload` urls into a full HTTP preload header, which is then attached to the response. When `settings.HTTP2_PRESEND_CACHED_HEADERS = True`, the first response's preload headers will be cached and automatically sent in advance during later requests (using [`StreamingHttpResponse`](https://docs.djangoproject.com/en/2.2/ref/request-response/#django.http.StreamingHttpResponse) to send them before the view executes). Upstream servers like Nginx and CloudFlare can then use these headers to do HTTP2 server push, delivering the resources to clients before they are requested during browser parse & rendering.
-
-<img src="https://i.imgur.com/sow31ar.png" width="70%"><img src="https://blog.golang.org/h2push/serverpush.svg" width="29%">
-
-## Usage
-
-Just use the `{% http2static '...' %}` tag instead of `{% static '...' %}` anytime you want to have a resource preloaded.
-
-```html
-<!-- It's still a good idea to put normal html preload link tags at the top of your templates in addition to using the auto-generated HTTP headers, though it's not strictly necessary -->
-<link rel="preload" as="style" href="{% http2static 'css/base.css' %}" crossorigin nonce="{{request.csp_nonce}}">
-<link rel="preload" as="script" href="{% http2static 'vendor/jquery-3.4.1/jquery.min.js' %}" crossorigin nonce="{{request.csp_nonce}}">
-
-...
-<!-- Place the actual tags anywhere on the page, they will likely already be pushed and downloaded by time the browser parses them. -->
-<link rel="stylesheet" href="{% http2static 'css/base.css' %}" type="text/css" crossorigin nonce="{{request.csp_nonce}}">
-<script src="{% http2static 'vendor/jquery-3.4.1/jquery.min.js' %}" type="text/javascript" crossorigin nonce="{{request.cscp_nonce}}"></script>
-```
-
-Don't use `{% http2static %}` for everything, just use it for things in the critical render path that are needed for the initial pageload.  It's best used for CSS, JS, fonts, and icons required to render the page nicely, but usually shouldn't be used for  non-critical footer scripts and styles, async page content, images, video, audio, or other media.
 
 ## Install:
 
@@ -106,6 +84,31 @@ TEMPLATES = [
 # add any types you want to use with nonce-validation (or just add it to the fallback default-src)
 CSP_DEFAULT_SRC = ("'self'", ...)
 CSP_INCLUDE_NONCE_IN = ('default-src',  ...)
+```
+
+## Usage
+
+Just use the `{% http2static '...' %}` tag instead of `{% static '...' %}` anytime you want to have a resource preloaded.
+
+```html
+<!-- It's still a good idea to put normal html preload link tags at the top of your templates in addition to using the auto-generated HTTP headers, though it's not strictly necessary -->
+<link rel="preload" as="style" href="{% http2static 'css/base.css' %}" crossorigin nonce="{{request.csp_nonce}}">
+<link rel="preload" as="script" href="{% http2static 'vendor/jquery-3.4.1/jquery.min.js' %}" crossorigin nonce="{{request.csp_nonce}}">
+
+...
+<!-- Place the actual tags anywhere on the page, they will likely already be pushed and downloaded by time the browser parses them. -->
+<link rel="stylesheet" href="{% http2static 'css/base.css' %}" type="text/css" crossorigin nonce="{{request.csp_nonce}}">
+<script src="{% http2static 'vendor/jquery-3.4.1/jquery.min.js' %}" type="text/javascript" crossorigin nonce="{{request.cscp_nonce}}"></script>
+```
+
+Don't use `{% http2static %}` for everything, just use it for things in the critical render path that are needed for the initial pageload.  It's best used for CSS, JS, fonts, and icons required to render the page nicely, but usually shouldn't be used for  non-critical footer scripts and styles, async page content, images, video, audio, or other media.
+
+**Recommended settings to use in `settings.py`:**
+
+```python
+HTTP2_PRELOAD_HEADERS = True
+HTTP2_PRESEND_CACHED_HEADERS = True
+HTTP2_SERVER_PUSH = False
 ```
 
 ## Verifying it works
