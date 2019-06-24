@@ -183,9 +183,8 @@ If all the options are enabled, it takes two initial requests after enabling the
 Start runserver behind nginx and reload your page 4 times while watching the dev console to confirm the cache warms up properly and later requests receive server-pushed resources.  If everyting is working correctly,
 the third pageload and all subsequent loads by all users should show up with the `x-http2-preload: early` response header, and pushed resources should appear significantly earlier in the network timing watefall view.
 
-You can inspect the preload performance of a given page and confirm it matches what you expect for its `x-http2-preload` mode using the network requests waterfall graph in the Chrome/Firefox/Safari dev tools:  
-<img src="https://i.imgur.com/cHRF8ZF.png" width="300px">
-<img src="https://i.imgur.com/g0ZU5u9.png" width="300px">
+You can inspect the preload performance of a given page and confirm it matches what you expect for its `x-http2-preload` mode using the network requests waterfall graph in the Chrome/Firefox/Safari dev tools. 
+
 
 |     `x-http2-preload: off`     |         `x-http2-preload: late`        |       `x-http2-preload: early`        |
 | ------------------------------ | -------------------------------------- | ------------------------------------- |
@@ -197,7 +196,9 @@ You can inspect the preload performance of a given page and confirm it matches w
 
 If you set `HTTP2_PRESEND_CACHED_HEADERS = True` and `HTTP2_SERVER_PUSH = False`, responses will all be sent in `x-http2-preload: late` mode, which is the recommended mode until cache digests become available in most browsers.
 
-<img src="https://www.nginx.com/wp-content/uploads/2018/02/http2-server-push-testing-results.png">
+<img src="https://i.imgur.com/cHRF8ZF.png" width="26%">
+<img src="https://i.imgur.com/g0ZU5u9.png" width="33%">
+<img src="https://www.nginx.com/wp-content/uploads/2018/02/http2-server-push-testing-results.png" width="50%">
 
 ## Further Reading
 
