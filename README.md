@@ -19,7 +19,7 @@ in preload headers correctly so that preloads aren't rejected by your CSP policy
 
 It works by providing a templatetag `{% http2static %}` that serves as a drop-in replacement for `{% static %}`, except it records all the urls used while rendering the template in `request.to_preload`.
 
-The http2 middleware then transforms the list of `to_preload` urls into a full HTTP preload header, which is then attached to the response. When `settings.HTTP2_PRESEND_CACHED_HEADERS = True`, the first response's preload headers will be cached and automatically sent in advance during later requests (using [`StreamingHttpResponse`](https://docs.djangoproject.com/en/2.2/ref/request-response/#django.http.StreamingHttpResponse) to send them before the view executes). Upstream servers like Nginx and CloudFlare can then use these headers to do HTTP2 server push, delivering the resources to clients before they are requested during browser parse & rendering.
+The http2 middleware then transforms the list of `to_preload` urls into a full HTTP preload header, which is then attached to the response. When `settings.HTTP2_PRESEND_CACHED_HEADERS = True`, the first response's preload headers will be cached and automatically sent in advance during later requests (using [`StreamingHttpResponse`](https://docs.djangoproject.com/en/2.2/ref/request-response/#django.http.StreamingHttpResponse) to send them before the view executes). Upstream servers like Nginx and CloudFlare can then use these headers to do HTTP2 server push, delivering the resources to clients before they are requested during browser parse & rendering.  With [TCP fast-open](https://en.wikipedia.org/wiki/TCP_Fast_Open), [TLS 1.3](https://blog.cloudflare.com/rfc-8446-aka-tls-1-3/), and [HTTP2 server push](https://www.smashingmagazine.com/2017/04/guide-http2-server-push/), it's now possible to have entire pageloads with only 1 round-trip, now all we need are cache-digests and QUIC and then we'll be at web nirvana 🎂.
 
 <img src="https://i.imgur.com/sow31ar.png" width="70%"><img src="https://blog.golang.org/h2push/serverpush.svg" width="29%">
 
@@ -153,7 +153,7 @@ configuring Django to do CSP verification here:
 ### Webserver Configuration
 
 In order to use HTTP2 server push, you need a webserver in front of Django that reads
-the <Link> preload headers and pushes the files.  Cloudflare has a GUI control panel option to enable server push,
+the <Link> preload headers and pushes the files.  Cloudflare has a GUI [control panel option](https://www.cloudflare.com/website-optimization/http2/serverpush/) to enable server push,
  and nginx can do it with only one extra line of config:
 
 ```nginx
