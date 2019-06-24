@@ -10,13 +10,17 @@ in preload headers correctly so that preloads aren't rejected by your CSP policy
 **A note about HTTP2 server-push:**  
 As an optional bonus, when preload headers are sent early and `HTTP2_SERVER_PUSH = True` in settings.py, upstream servers like Nginx or Cloudflare HTTP2 will usually finish server pushing all the page resources not only before the browser requests them, but even before the view is finished executing, providing a 100ms+ headstart to static file loading in some cases. When enabled it's very cool to look at the network waterfall visualization and see your page's statcifiles finish loading together, a full 50ms before the HTML is even returned from Django!
 
-HTTP2 server-push will become the optimal method of page delivery for both latency and bandwidth once cache-digests are released.  Until then, it remains a novel toy that isn't recommended in most cases, but is fun to play with if you like deploying the most cutting edge tech you can. Read more about HTTP2 and server push here:
+While modern and shiny, this wont necessarily make your site faster. In fact, it can often make sites slower because later requests have the resources cached anyway, pushing uneeded resources on every request only wastes network bandwidth and hogs IO in some cases.  Use the recommended settings below, or toggle the options while testing your project to see if server push provides real-world speed gains.
+
+HTTP2 server-push will become the optimal method of page delivery for both latency and bandwidth once cache-digests are released.  Read these articles the linked resources within them to learn more about HTTP2, server push, and why cache digest support is important to make it all worth it:
 
  - https://http2.github.io/faq/#whats-the-benefit-of-server-push
  - https://calendar.perfplanet.com/2016/cache-digests-http2-server-push/
  - https://httpwg.org/http-extensions/cache-digest.html#introduction
 
 This library is still useful without server push enabled though, as it's primary function is to collect statifiles and send them as `<Link>` preload headers in parallel *before the Django views finish executing*, which can provide a 100ms+ headstart for the browser to start loading page content in many cases. The optimal recommended settings for maximum speed gain (as of 2019/07) are to send preload headers, cache them and send them in advance, but don't enable `HTTP2_SERVER_PUSH` until cache-digest functionality is released in most browsers:
+
+**Recommended settings:**
 
 ```python
 HTTP2_PRELOAD_HEADERS = True
@@ -26,49 +30,62 @@ HTTP2_SERVER_PUSH = False
 
 ## How it works
 
-It works by providing a templatetag `{% http2static %}` that works just
-like `{% static %}`, except it records all the urls on `request.to_preload` automatically as it renders the template.
+It works by providing a templatetag `{% http2static %}` that serves as a drop-in replacement for `{% static %}`, except it records all the urls used while rendering the template in `request.to_preload`.
 
-Those urls are then transformed into an HTTP preload header which is attached to the response. When `settings.HTTP2_PRESEND_CACHED_HEADERS = True`, the first response's preload headers will be cached and automatically sent in advance during later requests (using [`StreamingHttpResponse`](https://docs.djangoproject.com/en/2.2/ref/request-response/#django.http.StreamingHttpResponse) to send them before the view executes) . Upstream servers like Nginx and CloudFlare will then use these headers to do HTTP2 server push, delivering the resources to clients before they are requested during browser parse & rendering.
+The http2 middleware then transforms the list of `to_preload` urls into a full HTTP preload header, which is then attached to the response. When `settings.HTTP2_PRESEND_CACHED_HEADERS = True`, the first response's preload headers will be cached and automatically sent in advance during later requests (using [`StreamingHttpResponse`](https://docs.djangoproject.com/en/2.2/ref/request-response/#django.http.StreamingHttpResponse) to send them before the view executes). Upstream servers like Nginx and CloudFlare can then use these headers to do HTTP2 server push, delivering the resources to clients before they are requested during browser parse & rendering.
 
 <img src="https://i.imgur.com/sow31ar.png">
 
-## Note about performance
-
-While modern and shiny, this wont necessarily make your site faster. In fact, it can often make sites slower because later requests have the resources cached anyway, pushing uneeded resources on every request only wastes network bandwidth and hogs IO in some cases. Server push is best for sites where first-visit speed is a top priority.  It's up to you to toggle the options and find what the best tradeoffs are for your own needs.
-
 ## Usage
+
+Just use the `{% http2static '...' %}` tag instead of `{% static '...' %}` anytime you want to have a resource preloaded.
+
 ```html
-<!-- Create a preload html tag at the top, not strictly necessary -->
-<!-- but it's a good fallback in case HTTP2 is not supported -->
+<!-- It's still a good idea to put normal html preload link tags at the top of your templates in addition to using the auto-generated HTTP headers, though it's not strictly necessary -->
 <link rel="preload" as="style" href="{% http2static 'css/base.css' %}" crossorigin nonce="{{request.csp_nonce}}">
+<link rel="preload" as="script" href="{% http2static 'vendor/jquery-3.4.1/jquery.min.js' %}" crossorigin nonce="{{request.csp_nonce}}">
 
 ...
-<!-- Place the actual tag anywhere on the page, it will likely -->
-<!-- already be pushed and downloaded by time the browser parses it. -->
+<!-- Place the actual tags anywhere on the page, they will likely already be pushed and downloaded by time the browser parses them. -->
 <link rel="stylesheet" href="{% http2static 'css/base.css' %}" type="text/css" crossorigin nonce="{{request.csp_nonce}}">
+<script src="{% http2static 'vendor/jquery-3.4.1/jquery.min.js' %}" type="text/javascript" crossorigin nonce="{{nonce}}"></script>
 ```
+
+Don't use `{% http2static %}` for everything, just use it for things in the critical render path that are needed for the initial pageload.  It's best used for CSS, JS, fonts, and icons required to render the page nicely, but usually shouldn't be used for  non-critical footer scripts and styles, async page content, images, video, audio, or other media.
 
 ## Install:
 
+1. Clone this repo as into your project folder next to `manage.py` as a new django app called "http2":
 ```bash
 cd /opt/your-project/project-django/
 git clone https://github.com/pirate/django-http2-middleware http2
 ```
 
-Then add the following to your `settings.py`:
+2. Add 'http2.middleware.HTTP2Middleware' to your `MIDDLEWARE` list (at the end, but before Gzip) in your project's `settings.py`:
 ```python
-# (adding "http2" to INSTALLED_APPS is not needed)
+MIDDLEWARE = [
+    ...
+    'csp.middleware.CSPMiddleware',       # (optional if you use django-csp, it must be above the http2 middleware)
+    'http2.middleware.HTTP2Middleware',   # (just add the middleware here, adding "http2" to INSTALLED_APPS is not needed)
+]
+```
 
+3. Add the django-http2-middleware configuration options anywhere in `settings.py` (all 3 must be added):
+```python
+HTTP2_PRELOAD_HEADERS = True         # attach any {% http2static %} urls in template as http preload header
+HTTP2_PRESEND_CACHED_HEADERS = True  # cache first request's preload urls and send in advance on subsequent requests
+HTTP2_SERVER_PUSH = False            # allow upstream servers to server-push any files in preload headers (False is recommended until cache-digests are sent by most browsers)
+```
+
+4. (Optional) Add the templatag as a global builtin to make `{% http2static %}` availabe in templates without needing `{% load http2 %}` at the top:
+```python
+# 
+# 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
         ...
         'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                ...
-            ],
+            ...
             'builtins': [
                 ...
                 'http2.templatetags',
@@ -77,25 +94,13 @@ TEMPLATES = [
     },
     ...
 ]
-MIDDLEWARE = [
-    ...
-    'csp.middleware.CSPMiddleware',  # (optional, must be above http2)
-    'http2.middleware.HTTP2Middleware',
-]
+```
 
-# attach any {% http2static %} urls in template as http preload header
-HTTP2_PRELOAD_HEADERS = True
-
-# cache first request's preload urls and send in advance on subsequent requests
-HTTP2_PRESEND_CACHED_HEADERS = True
-
-# allow upstream servers to server-push any files in preload headers
-HTTP2_SERVER_PUSH = False   # False is recommended until cache-digests are sent by most browsers
-
-# optional recommended django-csp settings if you use CSP with nonce validation
+5. (Optional if using `django-csp`) Include nonce validation on any desired resource types, preload headers will automatically include the same nonce taken from `{{request.csp_nonce}}`:
+```python
+# add any types you want to use with nonce-validation (or just add it to the fallback default-src)
 CSP_DEFAULT_SRC = ("'self'", ...)
 CSP_INCLUDE_NONCE_IN = ('default-src',  ...)
-...
 ```
 
 ## Verifying it works
@@ -117,17 +122,17 @@ You can see the preload status of a given page by inspecting the `X-HTTP2-PRELOA
 | ![](https://i.imgur.com/sN5Rmjn.png)  | ![](https://i.imgur.com/pSOcGQy.png)  | ![](https://i.imgur.com/ouRu1rf.png)  |
 | Requires `HTTP2_PRELOAD_HEADERS = True`  | Requires `HTTP2_PRESEND_CACHED_HEADERS = True`  | Requires `HTTP2_SERVER_PUSH = True`  |
 
+If you set `HTTP2_PRESEND_CACHED_HEADERS = True` and `HTTP2_SERVER_PUSH = False`, responses will all be sent in `x-http2-preload: late` mode, which is the recommended mode until cache digests become available in most browsers.
 
 
-
-## Example Nginx Configuration
+## Example Webserver Configuration
 
 In order to use HTTP2 server push, you need a webserver in front of Django that reads
-the <Link> preload headers and pushes the files.  Luckily, nginx can do this with only
-one extra line of config.
+the <Link> preload headers and pushes the files.  Cloudflare has an option to enable server push,
+ and nginx can do this with only one extra line of config.
 
 ```nginx
-http2_push_preload on;  # nginx will automatically server-push anything specified in the preload header
+http2_push_preload on;  # now nginx will automatically server-push anything specified in preload headers
 ...
 
 server {
