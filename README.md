@@ -7,7 +7,7 @@
 
 <img src="https://i.imgur.com/ouRu1rf.png" height="250px" align="right">
 
-This is a small middlware for Django v2.0+ to automatically generate preload headers from staticfiles used in template rendering, with support for using [`StreamingHttpResponse`](https://docs.djangoproject.com/en/2.2/ref/request-response/#django.http.StreamingHttpResponse) to send cached preload headers in advance of the actual response being generated. The preload headers alone provide large speed boost, but pre-sending the cached headers in advance of view execution is the real advantage that this library provides compared to other libraries. 
+This is a small middlware for Django v2.0+ to automatically generate preload headers from staticfiles used in template rendering, with support for using [`StreamingHttpResponse`](https://docs.djangoproject.com/en/2.2/ref/request-response/#django.http.StreamingHttpResponse) to send cached preload headers in advance of the actual response being generated. The preload headers alone provide large speed boost, but pre-sending the cached headers in advance of view execution is the real advantage that this library provides. 
 
 It's also fully compatible with [`django-csp`](https://django-csp.readthedocs.io/en/latest/configuration.html), it sends `request.csp_nonce` 
 in preload headers correctly so that preloads aren't rejected by your CSP policy if they require a nonce. Support for automatically generating and attaching CSP hashes for staticfiles and inline blocks is also planned in the near future.
