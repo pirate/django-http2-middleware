@@ -12,6 +12,8 @@ This is a small middlware for Django v2.0+ to automatically generate preload hea
 It's also built to support modern security features like [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy) using [`django-csp`](https://django-csp.readthedocs.io/en/latest/configuration.html), it sends `request.csp_nonce` 
 in preload headers correctly so that preloads aren't rejected by your CSP policy if they require a nonce. Support for automatically generating and attaching CSP hashes for staticfiles and inline blocks is also planned in the near future.
 
+It's not yet production-ready (I'll put it on PyPI when it is), but for now it's easily installable by cloning it into your apps folder, and the codebase is small enough to be quickly reviewed and customized to a project's needs.
+
 ---
 
 
