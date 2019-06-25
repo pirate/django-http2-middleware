@@ -210,16 +210,16 @@ If you set `HTTP2_PRESEND_CACHED_HEADERS = True` and `HTTP2_SERVER_PUSH = False`
 
 ### Docs & Articles
 
-https://dexecure.com/blog/http2-push-vs-http-preload/
-https://www.keycdn.com/blog/http-preload-vs-http2-push
-https://symfony.com/doc/current/web_link.html
-https://www.smashingmagazine.com/2017/04/guide-http2-server-push/
-http2.github.io/faq/#whats-the-benefit-of-server-push
-https://calendar.perfplanet.com/2016/cache-digests-http2-server-push
-https://httpwg.org/http-extensions/cache-digest.html#introduction
-https://django-csp.readthedocs.io/en/latest/configuration.html#policy-settings
-https://content-security-policy.com
-htts://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
+ - https://dexecure.com/blog/http2-push-vs-http-preload/
+ - https://www.keycdn.com/blog/http-preload-vs-http2-push
+ - https://symfony.com/doc/current/web_link.html
+ - https://www.smashingmagazine.com/2017/04/guide-http2-server-push/
+ - http2.github.io/faq/#whats-the-benefit-of-server-push
+ - https://calendar.perfplanet.com/2016/cache-digests-http2-server-push
+ - https://httpwg.org/http-extensions/cache-digest.html#introduction
+ - https://django-csp.readthedocs.io/en/latest/configuration.html#policy-settings
+ - https://content-security-policy.com
+ - htts://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
 
 ### Related Projects
 
