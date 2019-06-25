@@ -208,6 +208,21 @@ If you set `HTTP2_PRESEND_CACHED_HEADERS = True` and `HTTP2_SERVER_PUSH = False`
 
 ## Further Reading
 
+### Docs & Articles
+
+https://dexecure.com/blog/http2-push-vs-http-preload/
+https://www.keycdn.com/blog/http-preload-vs-http2-push
+https://symfony.com/doc/current/web_link.html
+https://www.smashingmagazine.com/2017/04/guide-http2-server-push/
+http2.github.io/faq/#whats-the-benefit-of-server-push
+https://calendar.perfplanet.com/2016/cache-digests-http2-server-push
+https://httpwg.org/http-extensions/cache-digest.html#introduction
+https://django-csp.readthedocs.io/en/latest/configuration.html#policy-settings
+https://content-security-policy.com
+htts://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
+
+### Related Projects
+
 After making my own solution I discovered great minds think alike, and a few people have done exactly the same thing before me already!
 It's crazy how similarly we all chose to implement this, everyone used a drop-in replacement for `{% static %}`, I guess it goes to show
 that Django is particularly designed well in this area, because there's one obvious way to do things and everyone independently figured it out and implemented robust solutions in <200LOC.
@@ -218,6 +233,10 @@ that Django is particularly designed well in this area, because there's one obvi
 
 However, none of these support CSP policies (which require adding nonces to the preload headers), or use [`StreamingHttpResponse`](https://docs.djangoproject.com/en/2.2/ref/request-response/#django.http.StreamingHttpResponse)
 to send push headers before the view executes, so I think while not complete or "production-ready", this project takes adventage of the available speed-up methods to the fullest degree out of the 4.
+
+### Project Status
+
+Consider this project "alpha" software, not ready for production. It's on on PyPi, I'll publish it once it's at least "beta" and has some tests.  For now I recommend you clone it as a Django app, or simply read through the codebase and simply copy-paste the parts you want into your own project.
 
 Once HTTP2 [cache digests](https://httpwg.org/http-extensions/cache-digest.html) are finalized, server push will invariably become the fastest way to deliver assets, and this project will get more of my time as we integrate it into all our production projects at @Monadical-SAS.  To read more about why cache digests are critical to HTTP2 server push actually being useful, this article is a great resource:  
 
