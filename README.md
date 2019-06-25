@@ -221,7 +221,7 @@ If you set `HTTP2_PRESEND_CACHED_HEADERS = True` and `HTTP2_SERVER_PUSH = False`
  - https://content-security-policy.com
  - htts://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
 
-### Related Projects
+### Similar Projects
 
 After making my own solution I discovered great minds think alike, and a few people have done exactly the same thing before me already!
 It's crazy how similarly we all chose to implement this, everyone used a drop-in replacement for `{% static %}`, I guess it goes to show
