@@ -37,7 +37,7 @@ def record_file_to_preload(request, url):
     request.to_preload.add(url)
 
 
-def create_preload_header(urls, nonce=None):
+def create_preload_header(urls, nonce=None, server_push=None):
     """Compose the Link: header contents from a list of urls"""
     without_vers = lambda url: url.split('?', 1)[0]
     extension = lambda url: url.rsplit('.', 1)[-1].lower()
@@ -47,7 +47,10 @@ def create_preload_header(urls, nonce=None):
     sorted_urls = sorted(urls_with_ext, key=preload_priority)
 
     nonce = f'; nonce={nonce}' if nonce else ''
-    nopush = '; nopush' if settings.HTTP2_SERVER_PUSH else ''
+    if server_push is None:
+        server_push = getattr(settings, 'HTTP2_SERVER_PUSH', False)
+
+    nopush = '' if server_push else '; nopush'
 
     preload_tags = (
         f'<{url}>; rel=preload; crossorigin; as={PRELOAD_AS[ext]}{nonce}{nopush}'
@@ -69,7 +72,11 @@ def set_cached_response_type(request, response):
 def get_cached_preload_urls(request):
     global cached_preload_urls
 
-    if settings.HTTP2_PRESEND_CACHED_HEADERS and request.path in cached_preload_urls:
+    
+    
+    if (getattr(settings, 'HTTP2_PRESEND_CACHED_HEADERS', False)
+        and request.path in cached_preload_urls):
+        
         return cached_preload_urls[request.path]
 
     return ()
@@ -77,7 +84,9 @@ def get_cached_preload_urls(request):
 def set_cached_preload_urls(request):
     global cached_preload_urls
 
-    if settings.HTTP2_PRESEND_CACHED_HEADERS and getattr(request, 'to_preload', None):
+    if (getattr(settings, 'HTTP2_PRESEND_CACHED_HEADERS', False)
+        and getattr(request, 'to_preload', None)):
+        
         cached_preload_urls[request.path] = request.to_preload
 
 
@@ -87,7 +96,7 @@ def should_preload(request):
     # print('REQUEST TYPE', request_type)
     # print('CACHED RESPONSE TYPE', cached_response_type)
     return (
-        settings.HTTP2_PRELOAD_HEADERS
+        getattr(settings, 'HTTP2_PRELOAD_HEADERS', False)
         and 'text/html' in request_type
         and 'text/html' in cached_response_type
     )
