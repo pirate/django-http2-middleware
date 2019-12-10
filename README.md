@@ -232,11 +232,11 @@ that Django is particularly designed well in this area, because there's one obvi
 - https://github.com/DistPub/nginx-http2-django-server-push
 
 However, none of these support CSP policies (which require adding nonces to the preload headers), or use [`StreamingHttpResponse`](https://docs.djangoproject.com/en/2.2/ref/request-response/#django.http.StreamingHttpResponse)
-to send push headers before the view executes, so I think while not complete or "production-ready", this project takes adventage of the available speed-up methods to the fullest degree out of the 4.
+to send push headers before the view executes, so in some ways this project takes adventage of the available HTTP2 speed-up methods to the fullest degree out of the 4.
 
 ### Project Status
 
-Consider this project "alpha" software, not ready for production. It's on on PyPi, I'll publish it once it's at least "beta" and has some tests.  For now I recommend you clone it as a Django app, or simply read through the codebase and simply copy-paste the parts you want into your own project.
+Consider this library "beta" software, still rough in some areas, but used in production for 6+ months on several projects. It's not on PyPi tet, I'll publish it once it's nicer and has more tests.  For now it should be cloned into your Django folder, or used piecewise as inspiration for your own code.
 
 Once HTTP2 [cache digests](https://httpwg.org/http-extensions/cache-digest.html) are finalized, server push will invariably become the fastest way to deliver assets, and this project will get more of my time as we integrate it into all our production projects at @Monadical-SAS.  To read more about why cache digests are critical to HTTP2 server push actually being useful, this article is a great resource:  
 
@@ -271,6 +271,6 @@ def my_view(request):
 
 
 In small projects it's perfect for sending signup emails, tracking analytics events, writing to files, or any other CPU/IO intensive task that you don't want to block the user on.
-In large projects you probably don't want to block main Django worker threads with things that would be better handled in the background, as it'll greatly reduce the number of simultaneous users your servers can handle.
+In large projects, this is an antipattern because it encourages putting big blocking IO or CPU operations in these "fake" async request callbacks. The callbacks don't actually run asyncronously (like Celery), they don't provide any free performance improvement on the main server thread, in they just hide some operations outside of the normal request/response lifecycle and make it hard to track down latency issues. You probably don't want to block main Django worker threads with things that would be better handled in the background, as it'll greatly reduce the number of simultaneous users your servers can handle.
 
 For a full example demonstrating this library and more, check out this gist: [django_turbo_response.py](https://gist.github.com/pirate/79f84dfee81ba0a38b6113541e827fd5).
