@@ -119,7 +119,7 @@ def late_preload_response(request, get_response, nonce):
     response = get_response(request)
     set_cached_response_type(request, response)
 
-    if getattr(request, 'to_preload'):
+    if hasattr(request, 'to_preload'):
         preload_header = create_preload_header(request.to_preload, nonce)
         response['Link'] = preload_header
         set_cached_preload_urls(request)
