@@ -254,6 +254,10 @@ Did you know you can run code *after a Django view returns a response* without u
 Turns out it's trivially easy, but very few people know about it.
 
 ```python
+def my_view(request):
+    ...
+    return HttpResponseWithCallback(..., callback=some_expensive_function)
+
 class HttpResponseWithCallback(HttpResponse):
     def __init__(self, *args, **kwargs):
         self.callback = kwargs.pop('callback', None)
@@ -262,11 +266,6 @@ class HttpResponseWithCallback(HttpResponse):
     def close(self):
         super().close()
         self.callback and self.callback(response=self)
-
-
-def my_view(request):
-    ...
-    return HttpResponseWithCallback(..., callback=some_expensive_function)
 ```
 
 
