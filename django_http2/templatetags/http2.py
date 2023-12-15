@@ -1,7 +1,7 @@
 from django import template
 from django.contrib.staticfiles.templatetags.staticfiles import static
 
-from .middleware import record_file_to_preload
+from ..middleware import record_file_to_preload
 
 register = template.Library()
 

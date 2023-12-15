@@ -60,24 +60,6 @@ HTTP2_PRESEND_CACHED_HEADERS = True
 HTTP2_SERVER_PUSH = False
 ```
 
-1. (Optional) Add the templatag as a global template builtin in `settings.py`:
-This will make `{% http2static %}` availabe in templates without needing `{% load http2 %}` at the top.
-```python
-TEMPLATES = [
-    {
-        ...
-        'OPTIONS': {
-            ...
-            'builtins': [
-                ...
-                'django_http2.templatetags',
-            ],
-        },
-    },
-    ...
-]
-```
-
 1. (Optional if using `django-csp`) Include nonces on any desired resource types in `settings.py`:
 Generated preload headers will automatically include this nonce using `{{request.csp_nonce}}`.
 ```python
