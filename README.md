@@ -1,21 +1,18 @@
-# Django HTTP2 Middleware
+# Django HTTP2
 
 ```html
 <script src="{% http2static 'js/jquery.min.js' %}"></script>
-<!-- Preload header for js/jquery.min.js will be automatically attached to response --> 
+<!-- Preload header for js/jquery.min.js will be automatically attached to response -->
 ```
 
 <img src="https://i.imgur.com/ouRu1rf.png" height="250px" align="right">
 
-This is a small middlware for Django v2.0+ to automatically generate preload headers from staticfiles used in template rendering, with support for using [`StreamingHttpResponse`](https://docs.djangoproject.com/en/2.2/ref/request-response/#django.http.StreamingHttpResponse) to send cached preload headers in advance of the actual response being generated. The preload headers alone provide large speed boost, but pre-sending the cached headers in advance of view execution is the real advantage that this library provides. 
+This is a small middlware for Django v2.0+ to automatically generate preload headers from staticfiles used in template rendering, with support for using [`StreamingHttpResponse`](https://docs.djangoproject.com/en/2.2/ref/request-response/#django.http.StreamingHttpResponse) to send cached preload headers in advance of the actual response being generated. The preload headers alone provide large speed boost, but pre-sending the cached headers in advance of view execution is the real advantage that this library provides.
 
-It's also built to support modern security features like [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy) using [`django-csp`](https://django-csp.readthedocs.io/en/latest/configuration.html), it sends `request.csp_nonce` 
+It's also built to support modern security features like [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy) using [`django-csp`](https://django-csp.readthedocs.io/en/latest/configuration.html), it sends `request.csp_nonce`
 in preload headers correctly so that preloads aren't rejected by your CSP policy if they require a nonce. Support for automatically generating and attaching CSP hashes for staticfiles and inline blocks is also planned in the near future.
 
-It's not yet production-ready (I'll put it on PyPI if/when it ever is), but for now it's easily installable by cloning it into your apps folder, and the codebase is small enough to be quickly reviewed and customized to a project's needs.
-
 ---
-
 
 ## How it works
 
@@ -37,52 +34,33 @@ HTTP2 server-push will eventually become the optimal method of page delivery onc
  - https://calendar.perfplanet.com/2016/cache-digests-http2-server-push/
  - https://httpwg.org/http-extensions/cache-digest.html#introduction
 
-This library is still useful without server push enabled though, as it's primary function is to collect statifiles and send them as `<Link>` preload headers in parallel *before the Django views finish executing*, which can provide a 100ms+ headstart for the browser to start loading page content in many cases. The optimal recommended settings for maximum speed gain (as of 2019/07) are to send preload headers, cache them and send them in advance, but don't enable `HTTP2_SERVER_PUSH` until cache-digest functionality is released in most browsers. 
+This library is still useful without server push enabled though, as it's primary function is to collect statifiles and send them as `<Link>` preload headers in parallel *before the Django views finish executing*, which can provide a 100ms+ headstart for the browser to start loading page content in many cases. The optimal recommended settings for maximum speed gain (as of 2019/07) are to send preload headers, cache them and send them in advance, but don't enable `HTTP2_SERVER_PUSH` until cache-digest functionality is released in most browsers.
 
 ## Install:
 
-1. Clone this repo as into your project folder next to `manage.py` as a new django app called "http2":
+1. Install the `django-http2` package using your package manager of choice:
 ```bash
-cd /opt/your-project/project-django/
-git clone https://github.com/pirate/django-http2-middleware http2
+pip install django-http2
 ```
 
-2. Add `http2.middleware.HTTP2Middleware` to your `MIDDLEWARE` list in `settings.py`:
+1. Add `http2.middleware.HTTP2Middleware` to your `MIDDLEWARE` list in `settings.py`:
 ```python
 MIDDLEWARE = [
     ...
     'csp.middleware.CSPMiddleware',       # (optional if you use django-csp, it must be above the http2 middleware)
-    'http2.middleware.HTTP2Middleware',   # (add the middleware at the end, but before gzip)
+    'django_http2.middleware.HTTP2Middleware',   # (add the middleware at the end, but before gzip)
 ]
 # (adding "http2" to INSTALLED_APPS is not needed)
 ```
 
-3. Add the required configuration options to your `settings.py`:
+1. Add the required configuration options to your `settings.py`:
 ```python
 HTTP2_PRELOAD_HEADERS = True
 HTTP2_PRESEND_CACHED_HEADERS = True
 HTTP2_SERVER_PUSH = False
 ```
 
-4. (Optional) Add the templatag as a global template builtin in `settings.py`:  
-This will make `{% http2static %}` availabe in templates without needing `{% load http2 %}` at the top.
-```python
-TEMPLATES = [
-    {
-        ...
-        'OPTIONS': {
-            ...
-            'builtins': [
-                ...
-                'http2.templatetags',
-            ],
-        },
-    },
-    ...
-]
-```
-
-5. (Optional if using `django-csp`) Include nonces on any desired resource types in `settings.py`:  
+1. (Optional if using `django-csp`) Include nonces on any desired resource types in `settings.py`:
 Generated preload headers will automatically include this nonce using `{{request.csp_nonce}}`.
 ```python
 # add any types you want to use with nonce-validation (or just add it to the fallback default-src)
@@ -122,28 +100,28 @@ HTTP2_SERVER_PUSH = False
 ### `django-http2-middleware` Configuration
 
 #### `HTTP2_PRELOAD_HEADERS`
-*Values:* [`True`]/`False`  
+*Values:* [`True`]/`False`
 
 Attach any `{% http2static %}` urls used templates in an auto-generated HTTP preload header on the response.
 Disable this to turn off preload headers and disable the middleware entirely, this also prevents both header caching and http2 server push.
 
 #### `HTTP2_PRESEND_CACHED_HEADERS`
-*Values:* [`True`]/`False`  
+*Values:* [`True`]/`False`
 
 Cache first request's preload urls and send in advance on subsequent requests.
 Eanble this to cache the first request's generated preload headers and use [`StreamingHttpResponse`](https://docs.djangoproject.com/en/2.2/ref/request-response/#django.http.StreamingHttpResponse) on subsequent requests to send the headers early before the view starts executing.  Disable this to use normal HTTPResponses with the preload headers attached at the end of view execution.
 
 #### `HTTP2_SERVER_PUSH`
-*Values:* `True`/[`False`]  
+*Values:* `True`/[`False`]
 
 Allow upstream servers to server-push any files in preload headers.
-Disable this to add `; nopush` to all the preload headers to prevent upstream servers from pushing resources in advance.  
+Disable this to add `; nopush` to all the preload headers to prevent upstream servers from pushing resources in advance.
 Keeping this set to `False` is recommended until cache-digests are sent by most browsers.
 
 ### `django-csp` Configuration
 
-There are many ways to implement Content Security Policy headers and nonces with Django, 
-the most popular for django is [`django-csp`](https://github.com/mozilla/django-csp), 
+There are many ways to implement Content Security Policy headers and nonces with Django,
+the most popular for django is [`django-csp`](https://github.com/mozilla/django-csp),
 which is library maintained by Mozilla. This library is built to be compatible
 with Mozilla's `django-csp`, but it's not required to use both together.  You can find more info about
 configuring Django to do CSP verification here:
@@ -166,7 +144,7 @@ server {
 }
 ```
 
-See more info and nginx http2 options here:  
+See more info and nginx http2 options here:
 
  - https://www.nginx.com/blog/nginx-1-13-9-http2-server-push/
  - http://nginx.org/en/docs/http/ngx_http_v2_module.html
@@ -181,13 +159,13 @@ used for a given response by looking at the `x-http2-preload` header attached to
 If all the options are enabled, it takes two initial requests after enabling the middleware and starting Django for the cache to warm up, one to detect the content type, and one to build the list of resource URLs used by the template:
 
 1. The first request to a given URL has no preload headers sent in advance (`x-http2-preload: off`). It's used to confirm that the request and response are `Content-Type: text/html` and not a JSON API request, file download, or other non-html type that shouldn't have preload headers attached.
-2. The second request has preload headers but only attaches them after the response is generated (`x-http2-preload: late`). It's used build the initial cache of preload urls for the given `request.path` by collecting urls used by `{% http2static %}` tags during template rendering. 
+2. The second request has preload headers but only attaches them after the response is generated (`x-http2-preload: late`). It's used build the initial cache of preload urls for the given `request.path` by collecting urls used by `{% http2static %}` tags during template rendering.
 3. If `HTTP2_PRESEND_CACHED_HEADERS = True`, the third request (and all requests after that) send the cached headers immediately before the response is generated (`x-http2-preload: early`). If presending cached headers is disabled, then `StreamingHttpResponse` wont be used to pre-send headers before the view, and preload headers will be attached after the response as usual in `x-http2-preload: late` mode.
 
 Start runserver behind nginx and reload your page 4 times while watching the dev console to confirm the cache warms up properly and later requests receive server-pushed resources.  If everyting is working correctly,
 the third pageload and all subsequent loads by all users should show up with the `x-http2-preload: early` response header, and pushed resources should appear significantly earlier in the network timing watefall view.
 
-You can inspect the preload performance of a given page and confirm it matches what you expect for its `x-http2-preload` mode using the network requests waterfall graph in the Chrome/Firefox/Safari dev tools. 
+You can inspect the preload performance of a given page and confirm it matches what you expect for its `x-http2-preload` mode using the network requests waterfall graph in the Chrome/Firefox/Safari dev tools.
 
 
 |     `x-http2-preload: off`     |         `x-http2-preload: late`        |       `x-http2-preload: early`        |
@@ -238,10 +216,10 @@ to send push headers before the view executes, so in some ways this project take
 
 Consider this library "beta" software, still rough in some areas, but used in production for 6+ months on several projects. It's not on PyPi tet, I'll publish it once it's nicer and has more tests.  For now it should be cloned into your Django folder, or used piecewise as inspiration for your own code.
 
-Once HTTP2 [cache digests](https://httpwg.org/http-extensions/cache-digest.html) are finalized, server push will ~~invariably~~(2020 Edit: [lol](https://groups.google.com/a/chromium.org/g/blink-dev/c/K3rYLvmQUBY/m/vOWBKZGoAQAJ)) become the fastest way to deliver assets, and this project will get more of my time as we integrate it into all our production projects at @Monadical-SAS.  To read more about why cache digests are critical to HTTP2 server push actually being useful, this article is a great resource:  
+Once HTTP2 [cache digests](https://httpwg.org/http-extensions/cache-digest.html) are finalized, server push will ~~invariably~~(2020 Edit: [lol](https://groups.google.com/a/chromium.org/g/blink-dev/c/K3rYLvmQUBY/m/vOWBKZGoAQAJ)) become the fastest way to deliver assets, and this project will get more of my time as we integrate it into all our production projects at @Monadical-SAS.  To read more about why cache digests are critical to HTTP2 server push actually being useful, this article is a great resource:
 
 <div align="center">
-    
+
 <img src="https://i.imgur.com/fyFvPak.png" width="400px"><br/>
 
 ["Cache Digests: Solving the Cache Invalidation Problem of HTTP/2 Server Push to Reduce Latency and Bandwidth"](https://calendar.perfplanet.com/2016/cache-digests-http2-server-push/) by Sebastiaan Deckers
