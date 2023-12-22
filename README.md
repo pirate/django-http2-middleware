@@ -1,4 +1,20 @@
-# Django HTTP2 Middleware
+
+---
+
+## ⚠️ DEPRECATED now that HTTP3 is released
+  
+#### There are some useful concepts that can be reused from this for HTTP3 and above (e.g. caching and pre-sending hint headers before view code finishes running), but server push support was officially phased out in 2022 in favor of Early Hints, so the this library is now deprecated.  
+https://developer.chrome.com/blog/removing-push
+
+---
+
+<br/><br/>
+
+# Django HTTP2 Middleware (DEPRECATED)
+
+---
+
+<br/><br/>
 
 ```html
 <script src="{% http2static 'js/jquery.min.js' %}"></script>
